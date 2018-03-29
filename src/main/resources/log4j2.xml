@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- debug 可以查看log4j的装载过程, off关闭 -->
+<Configuration status="off" name="AppLog" monitorInterval="5">
+    <properties>
+    	<property name="LOG_LEVEL">info</property>
+    	<property name="LOG_HOME">/weblogic/log/irb</property>
+    	<property name="IRB_LOG_FILE_NAME">irb</property>
+        <property name="IRB_ERROR_LOG_FILE_NAME">irb_error</property>
+        <property name="IRB_INTERFACE_FILE_NAME">irb_interface</property>
+        <!-- 日志文件分割大小 -->
+        <property name="ROLLING_FILE_SIZE">20M</property>
+        <property name="ROLLING_FILE_COUNT">20</property>
+        <property name="ROLLING_FILE_INTERFACE_COUNT">30</property>
+    </properties>
+    
+    <!--%l= %c.%M(%F:%L)的组合，包括类全名、方法、文件名以及在代码中的行数。例如：XXX.XXX.main(Demo.java:12)。 -->
+	<Appenders>
+        <Console name="console_print" target="SYSTEM_OUT" >
+            <!-- <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss.SSS}][%-5level][%t] %c{1}:%L - %msg%n" /> -->
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss.SSS}][%-5level][%t] %class{1}.%M:%L - %msg%xEx%n" />
+        </Console>
+	
+		<!-- 按照时间和文件大小滚动：每天一个文件，或超过指定大小(10 MB)， 默认最多保存20个 
+			TimeBasedTriggeringPolicy与filePattern配合，当${FILE_NAME}-%d{yyyy-MM-dd HH-mm}-%i每X分钟
+			${FILE_NAME}-%d{yyyy-MM-dd HH}-%i 每X小时
+		-->
+        <!-- 文件20个滚动 -->
+		<RollingFile name="irb_log" fileName="${LOG_HOME}/${IRB_LOG_FILE_NAME}.log"
+			filePattern="${LOG_HOME}/${date:yyyy-MM}/${IRB_LOG_FILE_NAME}-%d{yyyy-MM-dd}-%i.log.gz">
+			<PatternLayout>
+				<Pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}][%-5level][%t] %l - %msg%n</Pattern>
+			</PatternLayout>
+			<Policies>
+				<SizeBasedTriggeringPolicy size="${ROLLING_FILE_SIZE}" />
+			</Policies>
+			<DefaultRolloverStrategy fileIndex="max" max="${ROLLING_FILE_COUNT}" />
+		</RollingFile>
+		<!-- error错误打印到文件 -->
+		<RollingFile name="irb_error_log" fileName="${LOG_HOME}/${IRB_ERROR_LOG_FILE_NAME}.log"
+			filePattern="${LOG_HOME}/${date:yyyy-MM}/${IRB_ERROR_LOG_FILE_NAME}-%d{yyyy-MM-dd}-%i.log.gz">
+			<PatternLayout>
+				<Pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}][%-5level][%t] %l - %msg%n</Pattern>
+			</PatternLayout>
+			<Policies>
+				<SizeBasedTriggeringPolicy size="${ROLLING_FILE_SIZE}" />
+			</Policies>
+			<Filters>
+				<ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="DENY" ></ThresholdFilter>
+			</Filters>
+			<DefaultRolloverStrategy fileIndex="max" max="${ROLLING_FILE_COUNT}" />
+		</RollingFile>
+		
+		<!-- 接口日志打印到文件 -->
+		<RollingFile name="irb_interface_log" fileName="${LOG_HOME}/${IRB_INTERFACE_FILE_NAME}.log"
+			filePattern="${LOG_HOME}/${date:yyyy-MM}/${IRB_INTERFACE_FILE_NAME}-%d{yyyy-MM-dd}-%i.log.gz">
+			<PatternLayout>
+				<Pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}][%-5level][%t] %l - %msg%n</Pattern>
+			</PatternLayout>
+			<Policies>
+				<SizeBasedTriggeringPolicy size="${ROLLING_FILE_SIZE}" />
+			</Policies>
+			<DefaultRolloverStrategy fileIndex="max" max="${ROLLING_FILE_INTERFACE_COUNT}" />
+		</RollingFile>
+	</Appenders>
+	<Loggers>
+        <!-- 显示sql, 将业务dao接口填写进去,并用控制台输出即可  debug TRACE -->  
+        <logger name="com.nxbank.irb.dao" level="debug">  
+            
+        </logger>
+        <!-- 实时接口日志 -->
+        <logger name="com.nxbank.irb.webservice.credit.creditinf" level="debug">  
+            <appender-ref ref="irb_interface_log"/>  
+        </logger>		
+		<Root level="${LOG_LEVEL}">
+			<appender-ref ref="irb_log" />
+			<appender-ref ref="irb_error_log" />
+			<appender-ref ref="console_print"/>
+		</Root>
+	</Loggers>
+</Configuration>
