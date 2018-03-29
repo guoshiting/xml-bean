@@ -1,13 +1,10 @@
 package cn.guo.util;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
-import javax.xml.bind.JAXBException;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -40,6 +37,7 @@ public class TransUtil {
 	private static final String setStrEnd = "    }";
 	private static final String stringType = "String";
 	private static final String listType = "List<%s>";
+	private static final String annotation = "	"+ConfigUtil.getProperty("annotation");
 	/**
 	 * 根据xml文件生成java代码
 	 * @param path xml文件所在的全路径
@@ -136,7 +134,9 @@ public class TransUtil {
 			@SuppressWarnings("unchecked")
 			List<Element> listEle = ele.elements();
 			if (listEle.isEmpty()) {
-				sb.append(String.format(attrStr, ele.getName()));
+				sb.append(String.format(annotation, ele.getName()));
+				sb.append(wrap);
+				sb.append(String.format(attrStr, downCaseFirst(ele.getName())));
 				map.put(ele.getName(), stringType);
 			} else {
 				if (set.contains(ele.getName())) {
@@ -149,10 +149,14 @@ public class TransUtil {
 					}
 				}
 				if (i == 0) {
-					sb.append(String.format(attr, upperCaseFirst(ele.getName()), ele.getName()));
+					sb.append(String.format(annotation, ele.getName()));
+					sb.append(wrap);
+					sb.append(String.format(attr, upperCaseFirst(ele.getName()), downCaseFirst(ele.getName())));
 					map.put(ele.getName(), upperCaseFirst(ele.getName()));
 				} else {
-					sb.append(String.format(attrList, upperCaseFirst(ele.getName()), ele.getName()));
+					sb.append(String.format(annotation, ele.getName()));
+					sb.append(wrap);
+					sb.append(String.format(attrList, upperCaseFirst(ele.getName()), downCaseFirst(ele.getName())));
 					set.add(ele.getName());
 					map.put(ele.getName(), String.format(listType, upperCaseFirst(ele.getName())));
 				}
@@ -179,7 +183,7 @@ public class TransUtil {
 		sb.append(wrap);
 		sb.append(String.format(getStrHead, map.get(key), upperCaseFirst(key)));
 		sb.append(wrap);
-		sb.append(String.format(getStrMiddle, key));
+		sb.append(String.format(getStrMiddle, downCaseFirst(key)));
 		sb.append(wrap);
 		sb.append(getStrEnd);
 		return sb;
@@ -197,7 +201,7 @@ public class TransUtil {
 		sb.append(wrap);
 		sb.append(String.format(setStrHead, upperCaseFirst(key), map.get(key), downCaseFirst(key)));
 		sb.append(wrap);
-		sb.append(String.format(setStrMiddle, key, downCaseFirst(key)));
+		sb.append(String.format(setStrMiddle, downCaseFirst(key), downCaseFirst(key)));
 		sb.append(wrap);
 		sb.append(setStrEnd);
 		return sb;
