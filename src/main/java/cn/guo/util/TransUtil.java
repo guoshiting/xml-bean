@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
@@ -37,11 +38,19 @@ public class TransUtil {
 	private static final String setStrEnd = "    }";
 	private static final String stringType = "String";
 	private static final String listType = "List<%s>";
-	private static final String annotation = "	"+ConfigUtil.getProperty("annotation");
+	private static final String annotation = "	" + ConfigUtil.getProperty("annotation")==null?"":ConfigUtil.getProperty("annotation");
+	private static final String annotationRoot = "	" + ConfigUtil.getProperty("annotation.root");
+	private static final String annotationGet = "	" + ConfigUtil.getProperty("annotation.get");
+	
+	private static boolean flag = true;
+
 	/**
 	 * 根据xml文件生成java代码
-	 * @param path xml文件所在的全路径
-	 * @param pageName 生成文件所在的包名
+	 * 
+	 * @param path
+	 *            xml文件所在的全路径
+	 * @param pageName
+	 *            生成文件所在的包名
 	 */
 	public static void writeClassByFile(String path, String pageName) {
 		SAXReader reader = new SAXReader();
@@ -54,10 +63,14 @@ public class TransUtil {
 			logger.error("xml文件读取失败!!!");
 		}
 	}
+
 	/**
 	 * 根据xml字符串生成java代码
-	 * @param xmlStr xml字符串
-	 * @param pageName 生成文件所在的包名
+	 * 
+	 * @param xmlStr
+	 *            xml字符串
+	 * @param pageName
+	 *            生成文件所在的包名
 	 */
 	public static void writeClassByString(String xmlStr, String pageName) {
 		try {
@@ -82,7 +95,7 @@ public class TransUtil {
 		@SuppressWarnings("unchecked")
 		List<Element> elements = element.elements();
 		StringBuffer sb = new StringBuffer();
-		HashSet<String> set = new HashSet<String>();
+		HashSet<String> set = new HashSet<String>();//每一个模块中的标签名储存的set,判断下一个标签名是否重复
 		String fileAllPath = filePath + File.separator + upperCaseFirst(element.getName()) + ".java";
 		if (!elements.isEmpty()) {
 			sb = writeClassHeader(sb, pageName, element);
@@ -134,28 +147,34 @@ public class TransUtil {
 			@SuppressWarnings("unchecked")
 			List<Element> listEle = ele.elements();
 			if (listEle.isEmpty()) {
-				sb.append(String.format(annotation, ele.getName()));
-				sb.append(wrap);
+				if (StringUtils.isNotBlank(annotation)) {
+					sb.append(String.format(annotation, ele.getName()));
+					sb.append(wrap);
+				}
 				sb.append(String.format(attrStr, downCaseFirst(ele.getName())));
 				map.put(ele.getName(), stringType);
 			} else {
 				if (set.contains(ele.getName())) {
 					continue;
 				}
-				int i = 0;
+				int i = 0;//是否是list的标识
 				for (Element el : elements) {
 					if (el.getName().equals(ele.getName())) {
 						i++;
 					}
 				}
-				if (i == 0) {
-					sb.append(String.format(annotation, ele.getName()));
-					sb.append(wrap);
+				if (i == 1) {
+					if (StringUtils.isNotBlank(annotation)) {
+						sb.append(String.format(annotation, ele.getName()));
+						sb.append(wrap);
+					}
 					sb.append(String.format(attr, upperCaseFirst(ele.getName()), downCaseFirst(ele.getName())));
 					map.put(ele.getName(), upperCaseFirst(ele.getName()));
 				} else {
-					sb.append(String.format(annotation, ele.getName()));
-					sb.append(wrap);
+					if (StringUtils.isNotBlank(annotation)) {
+						sb.append(String.format(annotation, ele.getName()));
+						sb.append(wrap);
+					}
 					sb.append(String.format(attrList, upperCaseFirst(ele.getName()), downCaseFirst(ele.getName())));
 					set.add(ele.getName());
 					map.put(ele.getName(), String.format(listType, upperCaseFirst(ele.getName())));
@@ -251,6 +270,10 @@ public class TransUtil {
 		sb.append(importList);
 		sb.append(wrap);
 		sb.append(wrap);
+		if(flag) {
+			sb.append("");
+			sb.append(wrap);
+		}
 		return sb;
 	}
 }
